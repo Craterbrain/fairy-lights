@@ -1,5 +1,5 @@
 // Tests for the editor page's logic. builder.html's script is run against a stub of the page, so no browser is needed.
-//   node --test tests/
+//   node --test tests/*.test.js
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const vm = require("node:vm");

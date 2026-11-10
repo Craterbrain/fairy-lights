@@ -70,7 +70,7 @@ RGB isn't possible. Details are in [PROTOCOL.md](PROTOCOL.md).
 
 ```sh
 python3 -m unittest discover -s tests                 # protocol, sender, builder server, library importer
-node --test tests/                                    # the editor page's logic
+node --test tests/*.test.js                                    # the editor page's logic
 cd android && ./gradlew :builder:testDebugUnitTest    # the Kotlin sender, byte for byte against the Python one
 ```
 
