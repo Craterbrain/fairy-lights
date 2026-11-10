@@ -24,7 +24,8 @@ def to_led_order(frame, w, h, flip_x=False, flip_y=False):
     return out
 
 def project_frames(path):
-    return frames_from_project(json.load(open(path)))
+    with open(path) as f:
+        return frames_from_project(json.load(f))
 
 def frames_from_project(p):
     w, h = p.get("w", fairy.GRID_W), p.get("h", fairy.GRID_H)

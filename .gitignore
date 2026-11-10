@@ -13,3 +13,4 @@ library/
 
 # your own saved animations
 projects/
+.coverage

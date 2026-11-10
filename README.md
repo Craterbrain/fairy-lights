@@ -66,6 +66,18 @@ Built and tested against one string: model `BSL84`, 800 LEDs laid out as 40 colu
 the top of `fairy.py`; other models may need a different size. The lights only take one-byte hue colours, so full
 RGB isn't possible. Details are in [PROTOCOL.md](PROTOCOL.md).
 
+## Tests
+
+```sh
+python3 -m unittest discover -s tests                 # protocol, sender, builder server, library importer
+node --test tests/                                    # the editor page's logic
+cd android && ./gradlew :builder:testDebugUnitTest    # the Kotlin sender, byte for byte against the Python one
+```
+
+The Python tests need `bleak` and `pillow` installed; `pip install coverage` adds line coverage (about 97% of the Python code, not counting the desktop window `fairy_gui.py`, which has no tests).
+They use fake Bluetooth objects, so no light is needed. What they can't check: real Bluetooth hardware, how the page looks
+in a browser, and the Android app's Bluetooth and WebView bridge. Those have only been tried by hand.
+
 ## License
 
 [0BSD](LICENSE): do whatever you like with it, no attribution needed. The licence covers the code in this repository, not the vendor's app or artwork.
