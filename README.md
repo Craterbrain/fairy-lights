@@ -68,4 +68,4 @@ RGB isn't possible. Details are in [PROTOCOL.md](PROTOCOL.md).
 
 ## License
 
-[MIT](LICENSE). The licence covers the code in this repository, not the vendor's app or artwork.
+[0BSD](LICENSE): do whatever you like with it, no attribution needed. The licence covers the code in this repository, not the vendor's app or artwork.
