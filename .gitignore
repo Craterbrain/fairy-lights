@@ -1,0 +1,15 @@
+# local environment
+.venv/
+__pycache__/
+android/.gradle/
+android/**/build/
+android/build/
+android/.kotlin/
+android/local.properties
+*.apk
+
+# the vendor app's artwork, extracted from its APK by tools/import_library.py: not ours to publish
+library/
+
+# your own saved animations
+projects/

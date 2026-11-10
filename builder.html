@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fairy Builder</title>
+<style>
+:root{--bg:#f3f2ee;--panel:#fff;--fg:#1b1b19;--mut:#6a6a64;--line:#dcdad2;--acc:#2f6f5e;--accfg:#fff;--acc-soft:#e3efe9;--bad:#b23b3b;--led:#2a2a31;--stage:#0b0b0e;--shadow:0 1px 2px rgba(0,0,0,.06),0 6px 18px rgba(0,0,0,.05)}
+@media (prefers-color-scheme:dark){:root{--bg:#111113;--panel:#1b1b1f;--fg:#ecebe6;--mut:#a09f98;--line:#2f2f35;--acc:#6cc2a6;--accfg:#0e1f19;--acc-soft:#1d2e28;--bad:#e58b8b;--shadow:0 1px 2px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px 120px}
+.wrap{max-width:1120px;margin:0 auto}
+header.top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0 10px}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;margin-right:6px}
+.brand small{font-weight:500;font-size:12px;color:var(--mut);margin-left:6px}
+.spacer{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:var(--shadow)}
+details.card>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:600}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::before{content:"▸";color:var(--mut);transition:transform .15s}
+details.card[open]>summary::before{transform:rotate(90deg)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.note{color:var(--mut);font-size:12px}
+.err{color:var(--bad)}
+label{color:var(--mut);font-size:13px;display:inline-flex;align-items:center;gap:6px}
+button,select,input[type=text],input[type=search]{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:38px}
+input[type=text]{min-width:0}
+button{cursor:pointer;transition:background .12s,border-color .12s,color .12s}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button:disabled{opacity:.45;cursor:default}
+button.on{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+button.go{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:650}
+button.icon{padding:8px 11px;font-size:16px;line-height:1}
+button.ghost{background:transparent}
+#tools{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.tool{display:inline-flex;align-items:center;gap:6px;flex:none}
+.tool .ic{font-size:16px;width:1.2em;text-align:center}
+.tool kbd{font:11px ui-monospace,monospace;opacity:.6;border:1px solid currentColor;border-radius:4px;padding:0 4px}
+.stage{background:var(--stage);border-radius:12px;padding:10px;overflow-x:auto;display:flex;justify-content:center}
+canvas{display:block;touch-action:none;cursor:crosshair}
+.meta{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 2px;font-size:12px;color:var(--mut)}
+.meta b{color:var(--fg);font-weight:600}
+.colours{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+#palette{display:flex;gap:5px;flex-wrap:wrap}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;padding:0;min-height:0;flex:none}
+.sw.sel{border-color:var(--fg);box-shadow:0 0 0 2px var(--panel) inset}
+.dotsw{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:inline-block;flex:none;background:transparent}
+#cur{width:34px;height:34px;border-radius:10px;border:2px solid var(--line);flex:none}
+input[type=range]{-webkit-appearance:none;appearance:none;height:10px;border-radius:99px;background:var(--line);min-height:0;padding:0;border:0;flex:1;min-width:120px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--panel);border:3px solid var(--acc);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--panel);border:3px solid var(--acc)}
+input[type=range].hue{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.ctx{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:8px;border-radius:10px;background:var(--acc-soft)}
+#strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x proximity}
+.th{flex:none;border:2px solid var(--line);border-radius:8px;background:var(--stage);cursor:pointer;position:relative;scroll-snap-align:center;overflow:hidden}
+.th.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-soft)}
+.th span{position:absolute;left:4px;top:2px;font-size:10px;color:#cfcfc8;text-shadow:0 0 3px #000}
+.th canvas{cursor:pointer;display:block;touch-action:auto}   /* thumbnails must not block swipe-scrolling like the paint canvas does */
+#strip{touch-action:pan-x pan-y}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.08);z-index:5}
+.bar .in{max-width:1120px;margin:0 auto}
+progress{flex:1;min-width:90px;height:8px;-webkit-appearance:none;appearance:none;border:0;border-radius:99px;background:var(--line);overflow:hidden}
+progress::-webkit-progress-bar{background:var(--line)}progress::-webkit-progress-value{background:var(--acc)}progress::-moz-progress-bar{background:var(--acc)}
+#libgrid{gap:10px;align-items:flex-start;margin-top:4px}
+#libchips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+#libchips button{padding:4px 10px;min-height:30px;border-radius:99px;font-size:13px}
+.libcard{width:132px}
+.libcard .th{width:100%}
+.libcard .nm{width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:3px 2px 0;font-size:12px;color:var(--mut)}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px;align-items:center}
+@media (max-width:640px){
+  body{padding:0 10px 132px}
+  .tool .lb{display:none}.tool kbd{display:none}.tool{padding:8px 13px}
+  header.top .brand small{display:none}
+  .libcard{width:calc(50% - 5px)}
+  .note.hide-s{display:none}
+}
+@media (pointer:coarse){button,select,input[type=text]{min-height:44px}.sw{width:30px;height:30px}.sw.sel{box-shadow:0 0 0 2px var(--panel) inset}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">Fairy Builder<small id="gridnote"></small></div>
+  <input type="text" id="name" placeholder="Project name" value="untitled" size="14" aria-label="Project name">
+  <div class="spacer"></div>
+  <button id="undo" class="icon ghost" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+  <button id="redo" class="icon ghost" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+  <button id="save">Save</button>
+  <select id="projects" aria-label="Open a saved project"><option value="">Open…</option></select>
+  <span class="note" id="savemsg"></span>
+</header>
+
+<section class="card">
+  <div id="tools" aria-label="Tools"></div>
+  <div class="stage"><canvas id="c" aria-label="Pixel canvas"></canvas></div>
+  <div class="meta"><span><b id="caption">Frame 1 of 1</b></span><span id="coord"></span></div>
+
+  <div class="colours">
+    <div id="palette" aria-label="Colour palette"></div>
+    <span id="cur" title="Current colour"></span>
+    <input type="range" class="hue" id="hue" min="0" max="179" value="0" aria-label="Hue">
+  </div>
+  <div class="row" style="margin-top:10px"><label><input type="checkbox" id="onion" checked> Ghost of previous frame</label></div>
+
+  <div class="ctx" id="selrow">
+    <span class="note">Selection</span>
+    <button id="selall">Box around drawing</button>
+    <button id="copy">Copy</button><button id="paste">Paste</button><button id="del">Delete</button>
+    <span class="note hide-s">Drag inside the box to move it · arrow keys nudge · Enter drops it</span>
+  </div>
+  <div class="ctx" id="textrow">
+    <input type="text" id="txt" placeholder="Type some text" size="14" aria-label="Text">
+    <label>Height <select id="tsize"></select></label>
+    <button id="tplace">Place as selection</button>
+    <label>Step <select id="tstep"><option>1</option><option selected>2</option><option>3</option><option>4</option></select> px</label>
+    <button id="tscroll">Make scrolling frames</button>
+  </div>
+  <div class="ctx" id="swaprow">
+    <span class="note">Recolour</span>
+    <span class="row" style="gap:6px">Replace <span class="dotsw" id="swfrom" title="Colour to replace"></span> with <span class="dotsw" id="swto" title="New colour (the one picked above)"></span></span>
+    <label>in <select id="swscope"><option value="all">every frame</option><option value="one">this frame only</option></select></label>
+    <button id="swapgo" class="go">Swap</button>
+    <button id="swapoff" title="Turn every pixel of that colour off">Swap to off</button>
+    <span class="note" id="swapmsg"></span>
+    <span class="note hide-s">Tap a pixel to choose the colour to replace, pick the new colour above, then press Swap.</span>
+  </div>
+</section>
+
+<section class="card">
+  <div class="row" style="margin-bottom:8px">
+    <button id="fnew" title="Add an empty frame after this one">＋ Blank</button>
+    <button id="fdup" class="go" title="Add a copy of this frame after it, then edit the copy">⧉ Duplicate</button>
+    <button id="fpull" title="Replace this frame with the previous one">⇤ Pull previous</button>
+    <button id="fclear" title="Empty this frame">Clear</button>
+    <button id="fleft" class="icon" title="Move frame earlier" aria-label="Move frame earlier">◀</button>
+    <button id="fright" class="icon" title="Move frame later" aria-label="Move frame later">▶</button>
+    <button id="fdel" title="Delete this frame">Delete</button>
+    <span class="note" id="fcount"></span>
+  </div>
+  <div id="strip"></div>
+  <div class="row" style="margin-top:6px">
+    <button id="play">▶ Preview</button>
+    <label>Preview speed <input type="range" id="fps" min="1" max="30" value="6" style="min-width:110px"></label>
+    <span class="note hide-s">Preview only. The light's own speed is under Light settings.</span>
+  </div>
+</section>
+
+<details class="card" id="libpanel">
+  <summary>Library <span class="note" id="libcount" style="font-weight:400">built-in pictures and animations from the vendor app</span></summary>
+  <div class="row" style="margin-top:10px">
+    <input type="search" id="libq" placeholder="Search name or category" size="20" aria-label="Search the library">
+    <label>Show <select id="libfilter"><option value="native">Made for 40 × 20</option><option value="all">Everything (centred or cropped)</option></select></label>
+    <label><input type="checkbox" id="libmulti"> Animations only</label>
+  </div>
+  <div id="libchips"></div>
+  <div id="libgrid" class="row"></div>
+  <div class="row" style="margin-top:10px"><button id="libmore">Show more</button><span class="note">Tap a picture to open it in the editor. Undo brings your previous work back.</span></div>
+</details>
+
+<details class="card" id="settings">
+  <summary>Light settings <span class="note" style="font-weight:400">speed, effect, orientation</span></summary>
+  <div class="settings-grid">
+    <label>Speed <input type="range" id="speed" min="1" max="100" value="50"><span id="speedv" style="min-width:2ch">50</span></label>
+    <label>Single-picture effect
+      <select id="dir"><option value="0">Static</option><option value="1">Scroll up</option><option value="2">Scroll down</option><option value="3">Scroll left</option><option value="4">Scroll right</option><option value="5">Flash</option><option value="6">Breath</option></select></label>
+    <label><input type="checkbox" id="flipx"> Mirror left/right</label>
+    <label><input type="checkbox" id="flipy"> Flip upside down</label>
+  </div>
+</details>
+
+</div>
+
+<div class="bar"><div class="in">
+  <div class="row">
+    <button id="send" class="go">Send to lights</button>
+    <button id="pon">On</button><button id="poff">Off</button>
+    <progress id="prog" value="0" max="1"></progress>
+  </div>
+  <div class="row" style="margin-top:4px;justify-content:space-between"><span id="status" class="note">Ready</span><span class="note" id="estimate"></span></div>
+</div></div>
+
+<script>
+"use strict";
+const W = 40, H = 20, OFF = 254, WHITE = 255, N = W * H;
+const ix = (x, y) => x * H + y;
+const $ = id => document.getElementById(id);
+
+// ---------- state ----------
+let frames = [new Uint8Array(N).fill(OFF)];
+let cur = 0, tool = "pen", colour = 0;
+let sel = null, flt = null;            // selection rect {x,y,w,h}; floating pixels {w,h,data}
+let clip = null, undoS = [], redoS = [];
+let playing = null, drag = null, cell = 20;
+
+const css = v => v === OFF ? null : v === WHITE ? "#ffffff" : `hsl(${v * 2},100%,50%)`;
+const cv = $("c"), ctx = cv.getContext("2d");
+
+// ---------- history ----------
+const snap = () => ({ frames: frames.map(f => f.slice()), cur });
+function push() { undoS.push(snap()); if (undoS.length > 100) undoS.shift(); redoS = []; }
+function restore(s) { frames = s.frames.map(f => f.slice()); cur = Math.min(s.cur, frames.length - 1); sel = null; flt = null; refresh(); }
+function undo() { commitFloat(); if (!undoS.length) return; redoS.push(snap()); restore(undoS.pop()); }
+function redo() { commitFloat(); if (!redoS.length) return; undoS.push(snap()); restore(redoS.pop()); }
+
+// ---------- floating selection ----------
+function commitFloat() {
+  if (!flt) return;
+  const f = frames[cur];
+  for (let a = 0; a < flt.w; a++) for (let b = 0; b < flt.h; b++) {
+    const x = sel.x + a, y = sel.y + b, v = flt.data[a * flt.h + b];
+    if (v !== OFF && x >= 0 && x < W && y >= 0 && y < H) f[ix(x, y)] = v;
+  }
+  flt = null; drawStrip(); save_local();
+}
+function lift() {
+  if (!sel || flt) return;
+  push();
+  const f = frames[cur], d = new Uint8Array(sel.w * sel.h).fill(OFF);
+  for (let a = 0; a < sel.w; a++) for (let b = 0; b < sel.h; b++) {
+    const x = sel.x + a, y = sel.y + b;
+    if (x >= 0 && x < W && y >= 0 && y < H) { d[a * sel.h + b] = f[ix(x, y)]; f[ix(x, y)] = OFF; }
+  }
+  flt = { w: sel.w, h: sel.h, data: d };
+}
+function deselect() { commitFloat(); sel = null; draw(); }
+function inSel(x, y) { return sel && x >= sel.x && x < sel.x + sel.w && y >= sel.y && y < sel.y + sel.h; }
+function bbox() {
+  const f = frames[cur]; let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) if (f[ix(x, y)] !== OFF) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  return x1 < 0 ? null : { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
+function copySel() {
+  if (!sel) return;
+  if (flt) { clip = { w: flt.w, h: flt.h, data: flt.data.slice() }; return; }
+  const f = frames[cur], d = new Uint8Array(sel.w * sel.h).fill(OFF);
+  for (let a = 0; a < sel.w; a++) for (let b = 0; b < sel.h; b++) {
+    const x = sel.x + a, y = sel.y + b;
+    if (x >= 0 && x < W && y >= 0 && y < H) d[a * sel.h + b] = f[ix(x, y)];
+  }
+  clip = { w: sel.w, h: sel.h, data: d };
+}
+function pasteClip(c, x, y) {
+  if (!c) return;
+  commitFloat(); push();
+  flt = { w: c.w, h: c.h, data: c.data.slice() };
+  sel = { x: x ?? 0, y: y ?? 0, w: c.w, h: c.h };
+  setTool("select"); draw();
+}
+function deleteSel() {
+  if (!sel) return;
+  if (flt) { flt = null; } else {
+    push(); const f = frames[cur];
+    for (let a = 0; a < sel.w; a++) for (let b = 0; b < sel.h; b++) {
+      const x = sel.x + a, y = sel.y + b;
+      if (x >= 0 && x < W && y >= 0 && y < H) f[ix(x, y)] = OFF;
+    }
+  }
+  sel = null; refresh();
+}
+
+// ---------- drawing ----------
+function sizeCanvas() {
+  const avail = $("c").parentElement.clientWidth - 16;
+  cell = Math.max(10, Math.min(26, Math.floor(avail / W)));
+  const dpr = window.devicePixelRatio || 1;
+  cv.style.width = W * cell + "px"; cv.style.height = H * cell + "px";
+  cv.width = W * cell * dpr; cv.height = H * cell * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function dot(x, y, fill, alpha = 1, r = 0.4) {
+  ctx.globalAlpha = alpha; ctx.fillStyle = fill; ctx.beginPath();
+  ctx.arc((x + 0.5) * cell, (y + 0.5) * cell, cell * r, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+}
+const themeColour = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function draw() {
+  ctx.clearRect(0, 0, W * cell, H * cell);
+  const f = frames[playing === null ? cur : playIdx], prev = playing === null && $("onion").checked && cur > 0 ? frames[cur - 1] : null;
+  const off = themeColour("--led");
+  for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) {
+    const v = f[ix(x, y)];
+    if (v !== OFF) dot(x, y, css(v));
+    else if (prev && prev[ix(x, y)] !== OFF) { dot(x, y, off, 1, 0.3); dot(x, y, css(prev[ix(x, y)]), 0.35, 0.4); }
+    else dot(x, y, off, 1, 0.3);
+  }
+  if (playing !== null) return;
+  if (tool === "swap" && swapFrom !== null && swapFrom !== OFF) {
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
+    for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) if (f[ix(x, y)] === swapFrom) { ctx.beginPath(); ctx.arc((x + 0.5) * cell, (y + 0.5) * cell, cell * 0.47, 0, 7); ctx.stroke(); }
+  }
+  if (flt) for (let a = 0; a < flt.w; a++) for (let b = 0; b < flt.h; b++) {
+    const v = flt.data[a * flt.h + b], x = sel.x + a, y = sel.y + b;
+    if (v !== OFF && x >= 0 && x < W && y >= 0 && y < H) dot(x, y, css(v));
+  }
+  const r = drag && drag.kind === "rect" ? drag.rect : sel;
+  if (r) { ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.strokeStyle = themeColour("--acc"); ctx.strokeRect(r.x * cell + 1, r.y * cell + 1, r.w * cell - 2, r.h * cell - 2); ctx.setLineDash([]); }
+}
+function thumb(f) {
+  const t = document.createElement("canvas"), s = 3; t.width = W * s; t.height = H * s;
+  const g = t.getContext("2d"); g.fillStyle = "#101014"; g.fillRect(0, 0, t.width, t.height);
+  for (let x = 0; x < W; x++) for (let y = 0; y < H; y++) { const v = f[ix(x, y)]; if (v !== OFF) { g.fillStyle = css(v); g.fillRect(x * s, y * s, s, s); } }
+  return t;
+}
+function drawStrip() {
+  const st = $("strip"); st.innerHTML = "";
+  frames.forEach((f, i) => {
+    const d = document.createElement("div"); d.className = "th" + (i === cur ? " sel" : "");
+    d.append(thumb(f)); const n = document.createElement("span"); n.textContent = i + 1; d.append(n);
+    d.onclick = () => { commitFloat(); sel = null; cur = i; refresh(); };
+    st.append(d);
+  });
+  $("fcount").textContent = `${frames.length} frame${frames.length === 1 ? "" : "s"}`;
+  $("caption").textContent = `Frame ${cur + 1} of ${frames.length}`;
+  const on = st.querySelector(".th.sel"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "nearest" });
+  const cap = frames.length;
+  const secs = Math.round(1.5 + cap * 0.9);
+  $("estimate").textContent = `Upload takes about ${secs} s. ` +
+    (cap > 255 ? "Over 255 frames: the protocol's frame number is one byte, so this can't be sent." :
+     cap > 25 ? "Past 25 frames is untested. The vendor app stops at 5; this light's own limit is unknown." :
+     cap > 5 ? "More than the vendor app's 5 frames. It should work, but it hasn't been tried yet." : "");
+  $("send").disabled = cap > 255;
+  $("dir").disabled = cap > 1;
+}
+function refresh() { sizeCanvas(); drawStrip(); draw(); save_local(); }
+
+// ---------- pointer ----------
+function cellAt(e) {
+  const r = cv.getBoundingClientRect();
+  return [Math.max(0, Math.min(W - 1, Math.floor((e.clientX - r.left) / cell))), Math.max(0, Math.min(H - 1, Math.floor((e.clientY - r.top) / cell)))];
+}
+function line(x0, y0, x1, y1, fn) {
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1; let err = dx + dy;
+  for (;;) { fn(x0, y0); if (x0 === x1 && y0 === y1) break; const e2 = 2 * err; if (e2 >= dy) { err += dy; x0 += sx; } if (e2 <= dx) { err += dx; y0 += sy; } }
+}
+function flood(x, y, to) {
+  const f = frames[cur], from = f[ix(x, y)]; if (from === to) return;
+  const q = [[x, y]]; f[ix(x, y)] = to;
+  while (q.length) {
+    const [a, b] = q.pop();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const c = a + dx, d = b + dy;
+      if (c >= 0 && c < W && d >= 0 && d < H && f[ix(c, d)] === from) { f[ix(c, d)] = to; q.push([c, d]); }
+    }
+  }
+}
+cv.addEventListener("pointerdown", e => {
+  if (playing !== null) stopPlay();
+  cv.setPointerCapture(e.pointerId);
+  const [x, y] = cellAt(e), f = frames[cur];
+  if (tool === "pen" || tool === "erase") { commitFloat(); sel = null; push(); const v = tool === "pen" ? colour : OFF; f[ix(x, y)] = v; drag = { kind: "paint", v, lx: x, ly: y }; }
+  else if (tool === "fill") { commitFloat(); sel = null; push(); flood(x, y, colour); }
+  else if (tool === "pick") { const v = f[ix(x, y)]; if (v !== OFF) setColour(v); }
+  else if (tool === "swap") { swapFrom = f[ix(x, y)]; $("swapmsg").textContent = ""; showSwap(); }
+  else if (tool === "select") {
+    if (inSel(x, y)) { lift(); drag = { kind: "move", sx: x, sy: y, ox: sel.x, oy: sel.y }; }
+    else { commitFloat(); sel = null; drag = { kind: "rect", sx: x, sy: y, rect: { x, y, w: 1, h: 1 } }; }
+  }
+  draw();
+});
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("pointerleave", () => { $("coord").textContent = ""; });
+cv.addEventListener("pointermove", e => {
+  const [hx, hy] = cellAt(e); $("coord").textContent = `col ${hx + 1}, row ${hy + 1}`;
+  if (!drag) return; const [x, y] = cellAt(e);
+  if (drag.kind === "paint") { line(drag.lx, drag.ly, x, y, (a, b) => { frames[cur][ix(a, b)] = drag.v; }); drag.lx = x; drag.ly = y; }
+  else if (drag.kind === "rect") drag.rect = { x: Math.min(drag.sx, x), y: Math.min(drag.sy, y), w: Math.abs(x - drag.sx) + 1, h: Math.abs(y - drag.sy) + 1 };
+  else if (drag.kind === "move") { sel.x = drag.ox + x - drag.sx; sel.y = drag.oy + y - drag.sy; }
+  draw();
+});
+const endDrag = () => { if (!drag) return; if (drag.kind === "rect") sel = drag.rect; drag = null; drawStrip(); draw(); save_local(); };
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+
+// ---------- tools and colours ----------
+const TOOLS = [["pen", "✎", "Pen", "P"], ["erase", "⌫", "Eraser", "E"], ["fill", "▣", "Fill", "F"], ["pick", "◉", "Pick", "I"], ["select", "⬚", "Select", "S"], ["text", "T", "Text", "T"], ["swap", "⇄", "Recolour", "R"]];
+let swapFrom = null;
+function showSwap() {
+  const c = v => v === null ? "transparent" : v === OFF ? "#101014" : css(v);
+  $("swfrom").style.background = c(swapFrom); $("swto").style.background = c(colour);
+}
+function recolour(to) {
+  if (swapFrom === null) { $("swapmsg").textContent = "Tap a pixel first to choose the colour to replace."; return; }
+  if (swapFrom === to) { $("swapmsg").textContent = "That's already the new colour."; return; }
+  const targets = $("swscope").value === "all" ? frames : [frames[cur]];
+  commitFloat(); sel = null;
+  let n = 0; targets.forEach(f => { for (let i = 0; i < N; i++) if (f[i] === swapFrom) n++; });
+  if (!n) { $("swapmsg").textContent = "No pixels of that colour."; return; }
+  push(); targets.forEach(f => { for (let i = 0; i < N; i++) if (f[i] === swapFrom) f[i] = to; });
+  swapFrom = to; showSwap(); refresh();
+  $("swapmsg").textContent = `Changed ${n} pixel${n === 1 ? "" : "s"}${targets.length > 1 ? ` in ${targets.length} frames` : ""}.`;
+}
+function setTool(t) {
+  if (t !== "select" && t !== "text") { commitFloat(); sel = null; }
+  tool = t;
+  document.querySelectorAll("#tools button").forEach(b => b.classList.toggle("on", b.dataset.t === t));
+  $("selrow").style.display = t === "select" ? "" : "none";
+  $("textrow").style.display = t === "text" ? "" : "none";
+  $("swaprow").style.display = t === "swap" ? "" : "none"; showSwap();
+  cv.style.cursor = t === "select" ? "move" : "crosshair"; draw();
+}
+TOOLS.forEach(([t, ic, label, key]) => {
+  const b = document.createElement("button"); b.className = "tool"; b.dataset.t = t; b.title = `${label} (${key})`;
+  b.innerHTML = `<span class="ic">${ic}</span><span class="lb">${label}</span><kbd>${key}</kbd>`; b.onclick = () => setTool(t); $("tools").append(b);
+});
+function setColour(v) {
+  colour = v; $("cur").style.background = css(v); if (typeof showSwap === "function") showSwap();
+  document.querySelectorAll("#palette .sw").forEach(s => s.classList.toggle("sel", +s.dataset.v === v));
+  if (v !== WHITE) $("hue").value = v;
+  if (tool === "erase" || tool === "pick") setTool("pen");
+}
+for (let v = 0; v < 180; v += 6) { const s = document.createElement("button"); s.className = "sw"; s.dataset.v = v; s.style.background = css(v); s.onclick = () => setColour(v); $("palette").append(s); }
+{ const s = document.createElement("button"); s.className = "sw"; s.dataset.v = WHITE; s.style.background = "#fff"; s.style.borderColor = "var(--line)"; s.title = "White"; s.onclick = () => setColour(WHITE); $("palette").append(s); }
+$("hue").oninput = e => setColour(+e.target.value);
+
+// ---------- text ----------
+for (const n of [7, 9, 11, 13, 15, 17, 19]) { const o = document.createElement("option"); o.textContent = n; if (n === 11) o.selected = true; $("tsize").append(o); }
+function rasterText(text, px) {
+  const m = document.createElement("canvas").getContext("2d"); m.font = `bold ${px}px sans-serif`;
+  const w = Math.max(1, Math.ceil(m.measureText(text).width) + 2), h = px + Math.ceil(px * 0.35);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.font = `bold ${px}px sans-serif`; g.textBaseline = "alphabetic"; g.fillStyle = "#000"; g.fillText(text, 1, px);
+  const img = g.getImageData(0, 0, w, h).data, d = new Uint8Array(w * h).fill(OFF);
+  for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) if (img[(b * w + a) * 4 + 3] > 110) d[a * h + b] = colour;
+  return { w, h, data: d };
+}
+$("tplace").onclick = () => {
+  const t = $("txt").value; if (!t) return;
+  const r = rasterText(t, +$("tsize").value);
+  pasteClip(r, Math.max(0, Math.floor((W - r.w) / 2)), Math.max(0, Math.floor((H - r.h) / 2)));
+};
+$("tscroll").onclick = () => {
+  const t = $("txt").value; if (!t) return;
+  const r = rasterText(t, +$("tsize").value), step = +$("tstep").value, n = Math.ceil((r.w + W) / step), y0 = Math.max(0, Math.floor((H - r.h) / 2));
+  if (n > 25 && !confirm(`This makes ${n} frames (about ${Math.round(1.5 + n * 0.9)} s to upload). Continue?`)) return;
+  commitFloat(); sel = null; push();
+  const made = [];
+  for (let i = 0; i < n; i++) {
+    const f = new Uint8Array(N).fill(OFF), x0 = W - i * step;
+    for (let a = 0; a < r.w; a++) for (let b = 0; b < r.h; b++) {
+      const x = x0 + a, y = y0 + b, v = r.data[a * r.h + b];
+      if (v !== OFF && x >= 0 && x < W && y >= 0 && y < H) f[ix(x, y)] = v;
+    }
+    made.push(f);
+  }
+  frames.splice(cur + 1, 0, ...made); cur += 1; refresh();
+};
+
+// ---------- frames ----------
+$("fnew").onclick = () => { commitFloat(); sel = null; push(); frames.splice(cur + 1, 0, new Uint8Array(N).fill(OFF)); cur++; refresh(); };
+$("fdup").onclick = () => { commitFloat(); sel = null; push(); frames.splice(cur + 1, 0, frames[cur].slice()); cur++; refresh(); };
+$("fpull").onclick = () => { if (cur === 0) return; commitFloat(); sel = null; push(); frames[cur] = frames[cur - 1].slice(); refresh(); };
+$("fclear").onclick = () => { commitFloat(); sel = null; push(); frames[cur].fill(OFF); refresh(); };
+$("fdel").onclick = () => { if (frames.length === 1) { $("fclear").click(); return; } commitFloat(); sel = null; push(); frames.splice(cur, 1); cur = Math.min(cur, frames.length - 1); refresh(); };
+$("fleft").onclick = () => { if (cur === 0) return; commitFloat(); push(); [frames[cur - 1], frames[cur]] = [frames[cur], frames[cur - 1]]; cur--; refresh(); };
+$("fright").onclick = () => { if (cur === frames.length - 1) return; commitFloat(); push(); [frames[cur + 1], frames[cur]] = [frames[cur], frames[cur + 1]]; cur++; refresh(); };
+$("undo").onclick = undo; $("redo").onclick = redo;
+$("selall").onclick = () => { commitFloat(); const b = bbox(); sel = b; draw(); };
+$("copy").onclick = copySel; $("paste").onclick = () => pasteClip(clip, sel ? sel.x : 0, sel ? sel.y : 0); $("del").onclick = deleteSel;
+$("onion").onchange = draw;
+$("swapgo").onclick = () => recolour(colour);
+$("swapoff").onclick = () => recolour(OFF);
+
+// ---------- preview ----------
+let playIdx = 0;
+function stopPlay() { clearInterval(playing); playing = null; $("play").textContent = "▶ Preview"; draw(); }
+$("play").onclick = () => {
+  if (playing !== null) return stopPlay();
+  commitFloat(); sel = null; playIdx = cur; $("play").textContent = "■ Stop";
+  const tick = () => { playIdx = (playIdx + 1) % frames.length; draw(); };
+  const start = () => { clearInterval(playing); playing = setInterval(tick, 1000 / +$("fps").value); };
+  playing = 0; start(); $("fps").oninput = () => { if (playing !== null) start(); };
+};
+
+// ---------- keyboard ----------
+addEventListener("keydown", e => {
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) && e.target.type !== "range" && e.target.type !== "checkbox") return;
+  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  if (mod && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && k === "y") { e.preventDefault(); redo(); return; }
+  if (mod && k === "c") { copySel(); return; }
+  if (mod && k === "v") { e.preventDefault(); pasteClip(clip, sel ? sel.x : 0, sel ? sel.y : 0); return; }
+  if (sel && ["arrowleft", "arrowright", "arrowup", "arrowdown"].includes(k)) {
+    e.preventDefault(); lift();
+    sel.x += k === "arrowleft" ? -1 : k === "arrowright" ? 1 : 0; sel.y += k === "arrowup" ? -1 : k === "arrowdown" ? 1 : 0; draw(); return;
+  }
+  if (sel && (k === "delete" || k === "backspace")) { e.preventDefault(); deleteSel(); return; }
+  if (k === "enter" || k === "escape") { deselect(); return; }
+  const map = { p: "pen", e: "erase", f: "fill", i: "pick", s: "select", t: "text", r: "swap" };
+  if (map[k] && !mod) { setTool(map[k]); return; }
+  if (k === "[") { commitFloat(); sel = null; cur = Math.max(0, cur - 1); refresh(); }
+  if (k === "]") { commitFloat(); sel = null; cur = Math.min(frames.length - 1, cur + 1); refresh(); }
+  if (k === " ") { e.preventDefault(); $("play").click(); }
+});
+
+// ---------- save / load / send ----------
+function payload() {
+  commitFloat();
+  return { name: $("name").value, w: W, h: H, speed: +$("speed").value, direction: frames.length > 1 ? 0 : +$("dir").value,
+           flipX: $("flipx").checked, flipY: $("flipy").checked, frames: frames.map(f => Array.from(f)) };
+}
+function load(p) {
+  frames = p.frames.map(f => Uint8Array.from(f)); cur = 0; sel = flt = null; undoS = []; redoS = [];
+  $("name").value = p.name || "untitled"; $("speed").value = p.speed ?? 50; $("speedv").textContent = $("speed").value;
+  $("dir").value = p.direction ?? 0; $("flipx").checked = !!p.flipX; $("flipy").checked = !!p.flipY; refresh();
+}
+function save_local() { try { localStorage.setItem("fairy-builder", JSON.stringify({ ...payload0() })); } catch (e) {} }
+function payload0() { return { name: $("name").value, speed: +$("speed").value, direction: +$("dir").value, flipX: $("flipx").checked, flipY: $("flipy").checked, frames: frames.map(f => Array.from(f)) }; }
+// In the Android app a native bridge answers these calls; in a browser they go to builder.py.
+const api = async (path, body) => {
+  if (window.FairyHost) return JSON.parse(window.FairyHost.call(path, body ? JSON.stringify(body) : ""));
+  const r = await fetch(path, body ? { method: "POST", body: JSON.stringify(body) } : {}); return r.json();
+};
+async function listProjects() { const l = await api("/api/projects"); $("projects").innerHTML = '<option value="">Load…</option>' + l.map(n => `<option>${n}</option>`).join(""); }
+$("save").onclick = async () => { const r = await api("/api/save", payload()); $("savemsg").textContent = r.ok ? `Saved “${r.name}”` : r.error; listProjects(); };
+$("projects").onchange = async e => { if (!e.target.value) return; load(await api("/api/load?name=" + encodeURIComponent(e.target.value))); e.target.value = ""; };
+$("send").onclick = async () => { const r = await api("/api/upload", payload()); if (!r.ok) $("status").textContent = r.error; poll(); };
+$("pon").onclick = async () => { await api("/api/power", { on: true }); poll(); };
+$("poff").onclick = async () => { await api("/api/power", { on: false }); poll(); };
+$("speed").oninput = e => $("speedv").textContent = e.target.value;
+let pollT = null;
+async function poll() {
+  clearTimeout(pollT);
+  try {
+    const s = await api("/api/state");
+    $("prog").max = Math.max(1, s.total); $("prog").value = s.progress;
+    $("status").textContent = s.error ? `${s.message}: ${s.error}` : s.message; $("status").className = "note" + (s.error ? " err" : "");
+    ["send", "pon", "poff"].forEach(id => { $(id).disabled = s.busy || (id === "send" && frames.length > 255); });
+    if (s.busy) pollT = setTimeout(poll, 400);
+  } catch (e) { $("status").textContent = "Can't reach the lights controller"; }
+}
+
+// ---------- library ----------
+let lib = [], libShown = 0;
+const b64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+let libCat = "";
+const catName = e => e.category || "uncategorised";
+function libFilter(withCategory) {
+  const q = $("libq").value.toLowerCase(), nat = $("libfilter").value === "native", multi = $("libmulti").checked;
+  return lib.filter(e => (!nat || e.native) && (!multi || e.frames > 1) && (!withCategory || !libCat || catName(e) === libCat) &&
+    (!q || (e.name + " " + catName(e) + " " + e.product).toLowerCase().includes(q)));
+}
+const libItems = () => libFilter(true);
+function libChips() {
+  const counts = new Map(); libFilter(false).forEach(e => counts.set(catName(e), (counts.get(catName(e)) || 0) + 1));
+  if (libCat && !counts.has(libCat)) libCat = "";
+  const total = [...counts.values()].reduce((a, b) => a + b, 0), box = $("libchips"); box.innerHTML = "";
+  const chip = (label, key, n) => { const b = document.createElement("button"); b.textContent = `${label} ${n}`; b.className = libCat === key ? "on" : ""; b.onclick = () => { libCat = key; libChips(); libRender(false); }; box.append(b); };
+  chip("All", "", total);
+  [...counts.keys()].sort().forEach(k => chip(k, k, counts.get(k)));
+}
+function libRender(more) {
+  const items = libItems(), g = $("libgrid");
+  if (!more) { g.innerHTML = ""; libShown = 0; }
+  items.slice(libShown, libShown + 60).forEach(e => {
+    const d = document.createElement("div"); d.className = "th"; d.title = `${e.name} (${catName(e)}, from ${e.product})\n${e.frames} frame(s), from a ${e.source_grid.join(" × ")} grid${e.native ? "" : e.cropped ? ", cropped" : ", centred"}`;
+    d.append(thumb(b64(e.thumb)));
+    const n = document.createElement("span"); n.textContent = e.frames > 1 ? e.frames + "f" : ""; d.append(n);
+    const l = document.createElement("div"); l.className = "note"; l.style.cssText = "width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 2px"; l.textContent = e.name; d.append(l);
+    d.onclick = async () => { const p = await api("/api/library/item?id=" + encodeURIComponent(e.id)); loadLibrary(p); };
+    g.append(d);
+  });
+  libShown = Math.min(items.length, libShown + 60);
+  $("libmore").style.display = libShown < items.length ? "" : "none";
+  $("libcount").textContent = `${items.length} of ${lib.length} shown`;
+}
+function loadLibrary(p) {
+  commitFloat(); push();
+  frames = p.frames.map(f => Uint8Array.from(f)); cur = 0; sel = flt = null;
+  $("speed").value = p.speed ?? 50; $("speedv").textContent = $("speed").value; $("dir").value = p.direction ?? 0;
+  $("flipx").checked = $("flipy").checked = false; $("name").value = p.name || "library"; refresh();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+async function libInit() {
+  try { lib = await api("/api/library"); } catch (e) { return; }
+  ["libq", "libfilter", "libmulti"].forEach(id => { $(id).oninput = $(id).onchange = () => { libChips(); libRender(false); }; });
+  $("libmore").onclick = () => libRender(true);
+  libChips(); libRender(false);
+}
+
+// ---------- start ----------
+$("gridnote").textContent = `${W} × ${H} grid`;
+try { const s = JSON.parse(localStorage.getItem("fairy-builder") || "null"); if (s && s.frames && s.frames.every(f => f.length === N)) load(s); } catch (e) {}
+setColour(0); setTool("pen"); refresh(); listProjects(); poll(); libInit();
+addEventListener("resize", () => { sizeCanvas(); draw(); });
+</script>
+</body>
+</html>
